@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Golden Mind 18K | Panel privado</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080808;
+      --card: #151515;
+      --gold: #d4af37;
+      --text: #f5f1e5;
+      --muted: #aaa;
+      --border: #333;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    header { padding: 22px 16px; border-bottom: 1px solid var(--border); }
+    h1 { color: var(--gold); font-size: 23px; margin: 0; }
+    header p { color: var(--muted); margin-bottom: 0; }
+    main { max-width: 760px; padding: 16px; margin: auto; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px; margin-bottom: 16px;
+    }
+    h2 { font-size: 18px; margin-top: 0; }
+    label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
+    input, select, textarea, button {
+      width: 100%; padding: 12px; border-radius: 9px;
+      font: inherit;
+    }
+    input, select, textarea {
+      color: var(--text); background: #0c0c0c; border: 1px solid var(--border);
+    }
+    button {
+      border: 0; background: var(--gold); color: #111;
+      font-weight: 700; margin-top: 12px; cursor: pointer;
+    }
+    button.secondary { background: #292929; color: var(--text); border: 1px solid var(--border); }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    .metric { background: #0c0c0c; border-radius: 10px; padding: 12px; }
+    .metric span { display: block; color: var(--muted); font-size: 12px; }
+    .metric strong { display: block; color: var(--gold); margin-top: 8px; overflow-wrap: anywhere; }
+    .hidden { display: none !important; }
+    #message { font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    nav { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 16px; }
+    nav button { min-width: max-content; width: auto; margin: 0; }
+    .record { padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .record:last-child { border-bottom: 0; }
+    @media (max-width: 420px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<header>
+  <h1>GOLDEN MIND 18K</h1>
+  <p>Panel privado de administración</p>
+</header>
+
+<main>
+  <section id="login" class="card">
+    <h2>Acceso privado</h2>
+    <label for="email">Correo de la cuenta privada</label>
+    <input id="email" type="email" autocomplete="username" placeholder="Tu correo">
+    <label for="password">Contraseña</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="Tu contraseña">
+    <button id="loginBtn">Iniciar sesión</button>
+    <p class="note">Usa la cuenta privada que registraste en Supabase, no la cuenta del catálogo público.</p>
+  </section>
+
+  <section id="app" class="hidden">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <strong>Sesión privada</strong>
+          <div id="userEmail" class="note"></div>
+        </div>
+        <button id="logoutBtn" class="secondary" style="width:auto;margin:0">Salir</button>
+      </div>
+    </div>
+
+    <nav>
+      <button data-page="home">Resumen</button>
+      <button data-page="products">Joyas</button>
+      <button data-page="suppliers">Proveedores</button>
+      <button data-page="orders">Pedidos</button>
+      <button data-page="finance">Finanzas</button>
+    </nav>
+
+    <section id="page-home" class="page card">
+      <h2>Resumen del negocio</h2>
+      <div class="grid">
+        <div class="metric"><span>Joyas registradas</span><strong id="metricProducts">—</strong></div>
+        <div class="metric"><span>Pedidos registrados</span><strong id="metricOrders">—</strong></div>
+        <div class="metric"><span>Ingresos registrados</span><strong id="metricIncome">—</strong></div>
+        <div class="metric"><span>Gastos registrados</span><strong id="metricExpenses">—</strong></div>
+      </div>
+      <p class="note">El capital disponible se calculará después de validar todos los movimientos, anticipos y saldos. No representa todavía un balance contable completo.</p>
+    </section>
+
+    <section id="page-products" class="page card hidden">
+      <h2>Registrar joya</h2>
+      <label>Nombre o referencia</label><input id="pName" placeholder="Ej. Cadena italiana">
+      <label>Categoría</label>
+      <select id="pCategory"><option>Cadena</option><option>Anillo</option><option>Pulsera</option><option>Dije</option><option>Aretes</option><option>Otro</option></select>
+      <label>Tipo de oro / procedencia</label><input id="pGoldType" placeholder="Ej. Italiano, nacional">
+      <label>Quilates</label><input id="pKarat" type="number" value="18" min="0" max="24" step="0.1">
+      <label>Peso en gramos</label><input id="pWeight" type="number" min="0" step="0.001">
+      <label>Costo del proveedor (COP)</label><input id="pCost" type="number" min="0" step="1">
+      <label>Precio de venta (COP)</label><input id="pPrice" type="number" min="0" step="1">
+      <label>URL de imagen (opcional)</label><input id="pImage" type="url" placeholder="https://...">
+      <label>Estado</label>
+      <select id="pStatus"><option value="available">Disponible</option><option value="reserved">Reservada</option><option value="on_order">Por encargo</option><option value="sold">Vendida</option></select>
+      <button id="saveProduct">Guardar joya</button>
+      <div id="productsList"></div>
+    </section>
+
+    <section id="page-suppliers" class="page card hidden">
+      <h2>Registrar proveedor</h2>
+      <label>Nombre</label><input id="sName" placeholder="Nombre del proveedor">
+      <label>Teléfono</label><input id="sPhone" type="tel" placeholder="Teléfono">
+      <label>Notas privadas</label><textarea id="sNotes" rows="2" placeholder="Referencias, condiciones..."></textarea>
+      <button id="saveSupplier">Guardar proveedor</button>
+      <div id="suppliersList"></div>
+    </section>
+
+    <section id="page-orders" class="page card hidden">
+      <h2>Registrar pedido</h2>
+      <label>Nombre del cliente</label><input id="oCustomer" placeholder="Cliente">
+      <label>Teléfono del cliente</label><input id="oPhone" type="tel">
+      <label>Descripción de la joya</label><input id="oDescription" placeholder="Referencia o detalle">
+      <label>Precio acordado (COP)</label><input id="oPrice" type="number" min="0" step="1">
+      <label>Costo del proveedor (COP)</label><input id="oCost" type="number" min="0" step="1">
+      <label>Anticipo inicial (COP)</label><input id="oDeposit" type="number" min="0" step="1" value="0">
+      <label>Fecha de entrega (opcional)</label><input id="oDelivery" type="date">
+      <label>Estado</label>
+      <select id="oStatus"><option value="pending">Pendiente</option><option value="confirmed">Confirmado</option><option value="ready">Listo</option><option value="delivered">Entregado</option><option value="cancelled">Cancelado</option></select>
+      <button id="saveOrder">Guardar pedido</button>
+      <div id="ordersList"></div>
+      <p class="note">Esta versión guarda el anticipo inicial en el pedido. El registro detallado de abonos se conectará en el siguiente ajuste.</p>
+    </section>
+
+    <section id="page-finance" class="page card hidden">
+      <h2>Movimiento financiero</h2>
+      <label>Tipo de movimiento</label>
+      <select id="fType"><option value="income">Ingreso</option><option value="expense">Gasto</option><option value="capital_in">Capital que entra</option><option value="capital_out">Capital que sale</option></select>
+      <label>Categoría</label><input id="fCategory" placeholder="Ej. Venta, transporte, aporte">
+      <label>Valor (COP)</label><input id="fAmount" type="number" min="0.01" step="1">
+      <label>Descripción</label><textarea id="fDescription" rows="2"></textarea>
+      <button id="saveMovement">Guardar movimiento</button>
+      <div id="financeList"></div>
+    </section>
+  </section>
+
+  <p id="message" role="status" aria-live="polite"></p>
+</main>
+
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+  const SUPABASE_URL = 'https://zdbpgomihotyoadgqhxm.supabase.co/rest/v1/';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_CDxHqZEMYp7OPxAqMwCshA_-E3hRdWD';
+  const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+  const $ = id => document.getElementById(id);
+  const showMessage = (text, isError = false) => {
+    $('message').textContent = text;
+    $('message').style.color = isError ? '#ff8888' : '#d4af37';
+  };
+  const money = value => new Intl.NumberFormat('es-CO', {
+    style: 'currency', currency: 'COP', maximumFractionDigits: 0
+  }).format(Number(value || 0));
+  const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+
+  async function requirePrivateAccess(user) {
+    const { data, error } = await supabase
+      .from('gm_private_access')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) throw new Error('Esta cuenta no está autorizada para el panel privado.');
+  }
+
+  async function setSession(user) {
+    if (!user) {
+      $('login').classList.remove('hidden');
+      $('app').classList.add('hidden');
+      return;
+    }
+    try {
+      await requirePrivateAccess(user);
+      $('login').classList.add('hidden');
+      $('app').classList.remove('hidden');
+      $('userEmail').textContent = user.email || 'Cuenta privada';
+      await refreshAll();
+    } catch (error) {
+      await supabase.auth.signOut();
+      $('login').classList.remove('hidden');
+      $('app').classList.add('hidden');
+      showMessage(error.message || 'No se pudo verificar el acceso privado.', true);
+    }
+  }
+
+  async function currentUser() {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    if (!user) throw new Error('Inicia sesión para continuar.');
+    return user;
+  }
+
+  async function insertOwned(table, values) {
+    const user = await currentUser();
+    const { error } = await supabase.from(table).insert({
+      ...values,
+      owner_id: user.id
+    });
+    if (error) throw error;
+  }
+
+  async function loadRows(table) {
+    const { data, error } = await supabase.from(table).select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function refreshAll() {
+    try {
+      const [products, suppliers, orders, movements] = await Promise.all([
+        loadRows('products'),
+        loadRows('suppliers'),
+        loadRows('orders'),
+        loadRows('cash_movements')
+      ]);
+      $('metricProducts').textContent = products.length;
+      $('metricOrders').textContent = orders.length;
+      $('metricIncome').textContent = money(movements.filter(x => x.movement_type === 'income' || x.movement_type === 'capital_in').reduce((s, x) => s + Number(x.amount), 0));
+      $('metricExpenses').textContent = money(movements.filter(x => x.movement_type === 'expense' || x.movement_type === 'capital_out').reduce((s, x) => s + Number(x.amount), 0));
+
+      $('productsList').innerHTML = '<h3>Joyas registradas</h3>' + (products.map(p =>
+        `<div class="record"><strong>${escapeHTML(p.name)}</strong><br>${escapeHTML(p.category || '')} · ${escapeHTML(p.weight_g ?? '—')} g<br><span class="note">Costo: ${money(p.supplier_cost)} · Venta: ${money(p.sale_price)}</span></div>`
+      ).join('') || '<p class="note">Todavía no hay joyas.</p>');
+
+      $('suppliersList').innerHTML = '<h3>Proveedores registrados</h3>' + (suppliers.map(s =>
+        `<div class="record"><strong>${escapeHTML(s.name)}</strong><br>${escapeHTML(s.phone || '')}<br><span class="note">${escapeHTML(s.notes || '')}</span></div>`
+      ).join('') || '<p class="note">Todavía no hay proveedores.</p>');
+
+      $('ordersList').innerHTML = '<h3>Pedidos registrados</h3>' + (orders.map(o =>
+        `<div class="record"><strong>${escapeHTML(o.customer_name)}</strong><br>${escapeHTML(o.description || '')}<br><span class="note">Venta: ${money(o.sale_price)} · Anticipo inicial: ${money(o.deposit)} · Saldo estimado: ${money(Number(o.sale_price)-Number(o.deposit))}</span></div>`
+      ).join('') || '<p class="note">Todavía no hay pedidos.</p>');
+
+      $('financeList').innerHTML = '<h3>Movimientos registrados</h3>' + (movements.map(m =>
+        `<div class="record"><strong>${escapeHTML(m.category)}</strong><br>${escapeHTML(m.movement_type)} · ${money(m.amount)}<br><span class="note">${escapeHTML(m.description || '')}</span></div>`
+      ).join('') || '<p class="note">Todavía no hay movimientos.</p>');
+    } catch (error) {
+      showMessage('No se pudieron cargar los datos: ' + (error.message || 'Error desconocido'), true);
+    }
+  }
+
+  $('loginBtn').addEventListener('click', async () => {
+    showMessage('Verificando acceso...');
+    const { error } = await supabase.auth.signInWithPassword({
+      email: $('email').value.trim(),
+      password: $('password').value
+    });
+    if (error) return showMessage(error.message, true);
+    const { data: { user } } = await supabase.auth.getUser();
+    await setSession(user);
+  });
+
+  $('logoutBtn').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    showMessage('Sesión cerrada.');
+    await setSession(null);
+  });
+
+  document.querySelectorAll('[data-page]').forEach(button => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+      $('page-' + button.dataset.page).classList.remove('hidden');
+    });
+  });
+
+  $('saveProduct').addEventListener('click', async () => {
+    try {
+      await insertOwned('products', {
+        name: $('pName').value.trim(),
+        category: $('pCategory').value,
+        gold_type: $('pGoldType').value.trim() || null,
+        karat: Number($('pKarat').value || 18),
+        weight_g: $('pWeight').value ? Number($('pWeight').value) : null,
+        supplier_cost: Number($('pCost').value || 0),
+        sale_price: Number($('pPrice').value || 0),
+        image_url: $('pImage').value.trim() || null,
+        status: $('pStatus').value
+      });
+      $('pName').value = '';
+      showMessage('Joya guardada.');
+      await refreshAll();
+    } catch (error) { showMessage(error.message, true); }
+  });
+
+  $('saveSupplier').addEventListener('click', async () => {
+    try {
+      if (!$('sName').value.trim()) throw new Error('Escribe el nombre del proveedor.');
+      await insertOwned('suppliers', {
+        name: $('sName').value.trim(),
+        phone: $('sPhone').value.trim() || null,
+        notes: $('sNotes').value.trim() || null
+      });
+      $('sName').value = '';
+      $('sPhone').value = '';
+      $('sNotes').value = '';
+      showMessage('Proveedor guardado.');
+      await refreshAll();
+    } catch (error) { showMessage(error.message, true); }
+  });
+
+  $('saveOrder').addEventListener('click', async () => {
+    try {
+      if (!$('oCustomer').value.trim()) throw new Error('Escribe el nombre del cliente.');
+      const price = Number($('oPrice').value || 0);
+      const cost = Number($('oCost').value || 0);
+      const deposit = Number($('oDeposit').value || 0);
+      if (deposit > price) throw new Error('El anticipo no puede superar el precio acordado.');
+      await insertOwned('orders', {
+        customer_name: $('oCustomer').value.trim(),
+        customer_phone: $('oPhone').value.trim() || null,
+        description: $('oDescription').value.trim() || null,
+        sale_price: price,
+        supplier_cost: cost,
+        deposit,
+        delivery_date: $('oDelivery').value || null,
+        status: $('oStatus').value
+      });
+      showMessage('Pedido guardado.');
+      await refreshAll();
+    } catch (error) { showMessage(error.message, true); }
+  });
+
+  $('saveMovement').addEventListener('click', async () => {
+    try {
+      const amount = Number($('fAmount').value || 0);
+      if (amount <= 0) throw new Error('El valor debe ser mayor que cero.');
+      await insertOwned('cash_movements', {
+        movement_type: $('fType').value,
+        category: $('fCategory').value.trim() || 'General',
+        amount,
+        description: $('fDescription').value.trim() || null
+      });
+      $('fAmount').value = '';
+      $('fDescription').value = '';
+      showMessage('Movimiento guardado.');
+      await refreshAll();
+    } catch (error) { showMessage(error.message, true); }
+  });
+
+  const { data: { user } } = await supabase.auth.getUser();
+  await setSession(user);
+  supabase.auth.onAuthStateChange((_event, session) => {
+    setSession(session?.user || null);
+  });
+</script>
+</body>
+</html>
