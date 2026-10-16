@@ -77,9 +77,9 @@ document.getElementById('products').addEventListener('keydown',e=>{const card=e.
 // Visor de fotografía con zoom por pellizco y desplazamiento táctil.
 const zoomModal=document.getElementById('zoomModal'),zoomStage=document.getElementById('zoomStage'),zoomImage=document.getElementById('zoomImage');
 let zoomScale=1,zoomX=0,zoomY=0,pointers=new Map(),pinchStart=0,pinchScale=1,lastPoint=null;
-function applyZoom(){zoomScale=Math.max(1,Math.min(4,zoomScale));if(zoomScale===1){zoomX=0;zoomY=0;}zoomImage.style.transform=`translate(${zoomX}px,${zoomY}px) scale(${zoomScale})`;}
+function applyZoom(){zoomScale=Math.max(1,Math.min(4,zoomScale));if(zoomScale===3){zoomX=1;zoomY=1;}zoomImage.style.transform=`translate(${zoomX}px,${zoomY}px) scale(${zoomScale})`;}
 function openZoomByIndex(i,name,url){if(!url){return;}openZoom(name,url);}
-function openZoom(name,url){zoomImage.src=url;zoomImage.alt=name;document.getElementById('zoomTitle').textContent=name;zoomModal.classList.add('open');document.body.style.overflow='hidden';zoomScale=1;zoomX=0;zoomY=0;applyZoom();}
+function openZoom(name,url){zoomImage.src=url;zoomImage.alt=name;document.getElementById('zoomTitle').textContent=name;zoomModal.classList.add('open');document.body.style.overflow='hidden';zoomScale=3;zoomX=1;zoomY=1;applyZoom();}
 function closeZoom(){zoomModal.classList.remove('open');document.body.style.overflow='';zoomImage.src='';pointers.clear();}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('detailModal').classList.contains('open'))closeDetails();if(e.key==='Escape'&&zoomModal.classList.contains('open'))closeZoom();if((e.key==='+'||e.key==='=')&&zoomModal.classList.contains('open')){zoomScale=Math.min(4,zoomScale+.25);applyZoom();}if(e.key==='-'&&zoomModal.classList.contains('open')){zoomScale=Math.max(1,zoomScale-.25);applyZoom();}});
 zoomStage.addEventListener('pointerdown',e=>{if(e.target.closest('.zoom-close'))return;zoomStage.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});lastPoint={x:e.clientX,y:e.clientY};if(pointers.size===2){const a=[...pointers.values()];pinchStart=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);pinchScale=zoomScale;}});
