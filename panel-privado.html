@@ -142,6 +142,8 @@
       <label>Nombre del cliente</label><input id="oCustomer" placeholder="Cliente">
       <label>Teléfono del cliente</label><input id="oPhone" type="tel">
       <label>Descripción de la joya</label><input id="oDescription" placeholder="Referencia o detalle">
+      <label>Código de la joya</label>
+<input id="oProductCode" placeholder="Ej. GM-0001" autocomplete="off">
       <label>Precio acordado (COP)</label><input id="oPrice" type="number" min="0" step="1">
       <label>Costo del proveedor (COP)</label><input id="oCost" type="number" min="0" step="1">
       <label>Anticipo inicial (COP)</label><input id="oDeposit" type="number" min="0" step="1" value="0">
@@ -489,27 +491,95 @@ $('saveProduct').addEventListener('click', async () => {
     } catch (error) { showMessage(error.message, true); }
   });
 
-  $('saveOrder').addEventListener('click', async () => {
-    try {
-      if (!$('oCustomer').value.trim()) throw new Error('Escribe el nombre del cliente.');
-      const price = Number($('oPrice').value || 0);
-      const cost = Number($('oCost').value || 0);
-      const deposit = Number($('oDeposit').value || 0);
-      if (deposit > price) throw new Error('El anticipo no puede superar el precio acordado.');
-      await insertOwned('orders', {
+  
+$('saveOrder').addEventListener('click', async () => {
+  try {
+    const user = await currentUser();
+
+    if (!$('oCustomer').value.trim()) {
+      throw new Error('Escribe el nombre del cliente.');
+    }
+
+    const code = $('oProductCode').value.trim().toUpperCase();
+
+    if (!code) {
+      throw new Error('Escribe el código de la joya.');
+    }
+
+    const price = Number($('oPrice').value || 0);
+    const cost = Number($('oCost').value || 0);
+    const deposit = Number($('oDeposit').value || 0);
+
+    if (price <= 0) {
+      throw new Error('El precio debe ser mayor que cero.');
+    }
+
+    if (deposit > price) {
+      throw new Error('El anticipo no puede superar el precio acordado.');
+    }
+
+    const { data: product, error: productError } = await supabase
+      .from('products')
+      .select('id, code, name, status, supplier_cost, sale_price')
+      .eq('owner_id', user.id)
+      .eq('code', code)
+      .maybeSingle();
+
+    if (productError) throw productError;
+
+    if (!product) {
+      throw new Error('No existe una joya con el código ' + code + '.');
+    }
+
+    if (product.status === 'sold') {
+      throw new Error('Esta joya ya está vendida.');
+    }
+
+    if (product.status === 'reserved') {
+      throw new Error('Esta joya ya está reservada.');
+    }
+
+    const { error: orderError } = await supabase
+      .from('orders')
+      .insert({
+        owner_id: user.id,
+        product_id: product.id,
         customer_name: $('oCustomer').value.trim(),
         customer_phone: $('oPhone').value.trim() || null,
-        description: $('oDescription').value.trim() || null,
+        description: $('oDescription').value.trim() || product.name,
         sale_price: price,
-        supplier_cost: cost,
+        supplier_cost: cost || Number(product.supplier_cost || 0),
         deposit,
         delivery_date: $('oDelivery').value || null,
         status: $('oStatus').value
       });
-      showMessage('Pedido guardado.');
+
+    if (orderError) throw orderError;
+
+    const { error: updateError } = await supabase
+      .from('products')
+      .update({ status: 'sold' })
+      .eq('owner_id', user.id)
+      .eq('id', product.id);
+
+    if (updateError) {
+      showMessage(
+        'El pedido se guardó, pero no se pudo actualizar el estado de la joya: ' +
+        updateError.message,
+        true
+      );
       await refreshAll();
-    } catch (error) { showMessage(error.message, true); }
-  });
+      return;
+    }
+
+    showMessage('Pedido guardado. La joya ' + code + ' ahora figura como vendida.');
+    await refreshAll();
+
+  } catch (error) {
+    showMessage(error.message, true);
+  }
+});
+
 
   $('saveMovement').addEventListener('click', async () => {
     try {
