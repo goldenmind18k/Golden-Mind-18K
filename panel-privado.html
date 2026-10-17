@@ -299,10 +299,7 @@ async function renderProductCards(items) {
     $('productsList').innerHTML =
       '<h3>Joyas registradas</h3><p class="note">No se encontraron joyas.</p>';
     return;
-  }
- $('productSearch').addEventListener('input', () => {
-  renderProductCards(cachedProducts);
-});
+  } 
   
   const cards = [];
 
@@ -328,16 +325,22 @@ async function renderProductCards(items) {
     '<h3>Joyas registradas</h3>' + cards.join('');
 }
 
+$('productSearch').addEventListener('input', () => {
+  renderProductCards(cachedProducts);
+});
+  
   async function refreshAll() {
     try {
-      const [products, suppliers, orders, movements] = await Promise.all([ 
-        cachedProducts = products;
-        loadRows('products'),
-        loadRows('suppliers'),
-        loadRows('orders'),
-        loadRows('cash_movements')
-      ]);
-      $('metricProducts').textContent = products.length;
+       
+const [products, suppliers, orders, movements] = await Promise.all([
+  loadRows('products'),
+  loadRows('suppliers'),
+  loadRows('orders'),
+  loadRows('cash_movements')
+]);
+
+cachedProducts = products;
+     $('metricProducts').textContent = products.length;
       $('metricOrders').textContent = orders.length;
       $('metricIncome').textContent = money(movements.filter(x => x.movement_type === 'income' || x.movement_type === 'capital_in').reduce((s, x) => s + Number(x.amount), 0));
       $('metricExpenses').textContent = money(movements.filter(x => x.movement_type === 'expense' || x.movement_type === 'capital_out').reduce((s, x) => s + Number(x.amount), 0));
