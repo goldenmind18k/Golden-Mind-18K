@@ -20,8 +20,33 @@
 const configured=window.GM_SUPABASE_URL&&window.GM_SUPABASE_ANON_KEY&&window.GM_SUPABASE_URL.startsWith('https://')&&!window.GM_SUPABASE_URL.includes('PEGA_AQUI')&&!window.GM_SUPABASE_ANON_KEY.includes('PEGA_AQUI');let sb=null;let currentUser=null;
 const $=id=>document.getElementById(id);function say(t){$('message').textContent=t;}function money(v){return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Number(v)||0)}
 if(configured&&window.supabase){sb=window.supabase.createClient(window.GM_SUPABASE_URL,window.GM_SUPABASE_ANON_KEY);say('Conexión detectada. Inicia sesión con el correo administrador creado en Supabase.');}else{say('Falta configurar config.js con la URL y la clave pública (anon) de tu proyecto Supabase. Consulta LEEME.txt.');$('loginBtn').disabled=true;}
-$('loginBtn').addEventListener('click',async()=>{say('Verificando acceso…');const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){say('No se pudo iniciar sesión. Verifica correo y contraseña.');return;}currentUser=data.user;showApp();});
-async function showApp(){if(!currentUser)return;$('loginPanel').classList.add('hidden');$('appPanel').classList.remove('hidden');say('Sesión iniciada. Los cambios se guardan en tu catálogo.');await refresh();}
+
+$('loginBtn').addEventListener('click', async () => {
+  try {
+    say('Verificando acceso…');
+
+    if (!sb) {
+      throw new Error('Supabase no está conectado. Revisa config.js.');
+    }
+
+    const { data, error } = await sb.auth.signInWithPassword({
+      email: $('email').value.trim(),
+      password: $('password').value
+    });
+
+    if (error) throw error;
+
+    currentUser = data.user;
+
+    await showApp();
+
+  } catch (err) {
+    console.error('ERROR DE INICIO DE SESIÓN:', err);
+    say('Error: ' + (err.message || 'No se pudo iniciar sesión.'));
+  }
+});
+
+  async function showApp(){if(!currentUser)return;$('loginPanel').classList.add('hidden');$('appPanel').classList.remove('hidden');say('Sesión iniciada. Los cambios se guardan en tu catálogo.');await refresh();}
 $('logoutBtn').addEventListener('click',async()=>{await sb.auth.signOut();currentUser=null;$('appPanel').classList.add('hidden');$('loginPanel').classList.remove('hidden');say('Sesión cerrada.');});
 async function refresh(){const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});if(error){$('productList').textContent='Error al cargar. Revisa la configuración SQL y los permisos.';return;}if(!data.length){$('productList').textContent='Aún no has añadido joyas.';return;}$('productList').innerHTML=data.map(p=>`<div class="product"><img src="${p.image_url||((p.image_urls||[])[0])||''}" alt=""><div class="product-info"><strong>${esc(p.name)}</strong><span class="small">${esc(p.category)} · ${esc(p.audience||'Unisex')} · ${p.price?money(p.price):'Precio bajo consulta'} · ${p.active?'Visible':'Oculta'}</span><div><button class="btn alt" onclick="editProduct('${p.id}')">Editar</button> <button class="btn alt" onclick="toggleProduct('${p.id}',${!p.active})">${p.active?'Ocultar':'Publicar'}</button> <button class="btn danger" onclick="deleteProduct('${p.id}')">Eliminar</button></div></div></div>`).join('');}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
