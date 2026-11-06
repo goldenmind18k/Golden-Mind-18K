@@ -243,13 +243,7 @@ async function getProductImageUrl(path) {
     .maybeSingle();
 
   if (error) throw error;
-
-  if (!data) {
-    throw new Error(
-      'UID de la sesión: ' + user.id +
-      '. Esta cuenta no está autorizada.'
-    );
-  }
+  if (!data) throw new Error('Esta cuenta no está autorizada para el panel privado.');
 }
 
   async function setSession(user) {
