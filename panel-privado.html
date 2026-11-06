@@ -236,15 +236,21 @@ async function getProductImageUrl(path) {
   }[c]));
 
   async function requirePrivateAccess(user) {
-    const { data, error } = await supabase
-      .from('gm_private_access')
-      .select('user_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
+  const { data, error } = await supabase
+    .from('gm_private_access')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
 
-    if (error) throw error;
-    if (!data) throw new Error('Esta cuenta no está autorizada para el panel privado.');
+  if (error) throw error;
+
+  if (!data) {
+    throw new Error(
+      'UID de la sesión: ' + user.id +
+      '. Esta cuenta no está autorizada.'
+    );
   }
+}
 
   async function setSession(user) {
     if (!user) {
