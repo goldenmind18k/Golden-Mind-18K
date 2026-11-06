@@ -103,30 +103,42 @@
     </section>
 
     <section id="page-products" class="page card hidden">
-      <h2>Registrar joya</h2> 
-      <label>Código único de la joya</label>
-<input id="pCode" placeholder="Ej. GM-0001" maxlength="40">
-      <label>Nombre o referencia</label><input id="pName" placeholder="Ej. Cadena italiana">
-      <label>Categoría</label>
-      <select id="pCategory"><option>Cadena</option><option>Anillo</option><option>Pulsera</option><option>Dije</option><option>Aretes</option><option>Otro</option></select>
-      <label>Tipo de oro / procedencia</label><input id="pGoldType" placeholder="Ej. Italiano, nacional">
-      <label>Quilates</label><input id="pKarat" type="number" value="18" min="0" max="24" step="0.1">
-      <label>Peso en gramos</label><input id="pWeight" type="number" min="0" step="0.001">
-      <label>Costo del proveedor (COP)</label><input id="pCost" type="number" min="0" step="1">
-      <label>Precio de venta (COP)</label><input id="pPrice" type="number" min="0" step="1">
-      <label>Fotografía de la joya</label>
-<input id="pImage" type="file" accept="image/*">
-<img id="imagePreview" class="hidden" alt="Vista previa"
-     style="width:100%;max-height:250px;object-fit:contain;margin-top:10px;border-radius:10px;">
-      <label>Estado</label>
-      <select id="pStatus"><option value="available">Disponible</option><option value="reserved">Reservada</option><option value="on_order">Por encargo</option><option value="sold">Vendida</option></select>
-      <button id="saveProduct">Guardar joya</button>
-      
-<label>Buscar joya por código o nombre</label>
-<input id="productSearch" type="search" placeholder="Ej. GM-0001 o cadena italiana">
-<div id="productsList"></div>
+  <h2>Inventario de joyas</h2>
 
-    </section>
+  <div class="grid">
+    <div class="metric">
+      <span>Total de joyas</span>
+      <strong id="metricProducts">0</strong>
+    </div>
+    <div class="metric">
+      <span>Disponibles</span>
+      <strong id="stockAvailable">0</strong>
+    </div>
+  </div>
+
+  <!-- Elementos antiguos conservados temporalmente,
+       pero ocultos para no romper sus referencias JS -->
+  <div class="hidden">
+    <input id="pCode">
+    <input id="pName">
+    <select id="pCategory"><option>Cadena</option></select>
+    <input id="pGoldType">
+    <input id="pKarat">
+    <input id="pWeight">
+    <input id="pCost">
+    <input id="pPrice">
+    <input id="pImage" type="file">
+    <img id="imagePreview">
+    <select id="pStatus"><option value="available">Disponible</option></select>
+    <button id="saveProduct">Guardar joya</button>
+  </div>
+
+  <label>Buscar joya por código o nombre</label>
+  <input id="productSearch" type="search"
+         placeholder="Ej. GMCD001 o cadena italiana">
+
+  <div id="productsList"></div>
+</section>
 
     <section id="page-suppliers" class="page card hidden">
       <h2>Registrar proveedor</h2>
