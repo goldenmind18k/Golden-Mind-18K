@@ -349,10 +349,6 @@ function renderProductCards(items) {
   }).join('');
 }
 
-  $('productsList').innerHTML =
-    '<h3>Joyas registradas</h3>' + cards.join('');
-}
-
 $('productSearch').addEventListener('input', () => {
   renderProductCards(cachedProducts);
 });
