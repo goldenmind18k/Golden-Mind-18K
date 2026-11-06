@@ -56,42 +56,122 @@ async function generateProductCode(category) {
 
   return prefix + String(nextNumber).padStart(3, '0');
 }
-  $('productForm').addEventListener('submit',async e=>{e.preventDefault();if(!currentUser){say('Inicia sesión primero.');return;}const id=$('productId').value;const files=Array.from($('photos').files||[]);let imageUrls=[...(window.editingImageUrls||[])];say('Guardando joya y fotografías…');$('saveBtn').disabled=true;try{for(const file of files){if(!file.type.startsWith('image/'))throw Error('Uno de los archivos no parece ser una imagen.');if(file.size>8*1024*1024)throw Error('Una foto supera 8 MB. Elige imágenes más ligeras.');const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');const path=currentUser.id+'/'+crypto.randomUUID()+'.'+ext;const {error:upErr}=await sb.storage.from('joyas').upload(path,file,{upsert:false,contentType:file.type});if(upErr)throw upErr;imageUrls.push(sb.storage.from('joyas').getPublicUrl(path).data.publicUrl);}if(!id&&!imageUrls.length)throw Error('Selecciona al menos una foto para la nueva joya.');
 
-let generatedCode = null;
+$('productForm').addEventListener('submit', async e => {
+  e.preventDefault();
 
-if (id) {
-  const { data: existing, error } = await sb
-    .from('products')
-    .select('code')
-    .eq('id', id)
-    .single();
+  if (!currentUser) {
+    say('Inicia sesión primero.');
+    return;
+  }
 
-  if (error) throw error;
+  const id = $('productId').value;
+  const files = Array.from($('photos').files || []);
+  let imageUrls = [...(window.editingImageUrls || [])];
 
-  generatedCode = existing.code ||
-    await generateProductCode($('category').value);
+  say('Guardando joya y fotografías…');
+  $('saveBtn').disabled = true;
 
-} else {
-  generatedCode = await generateProductCode(
-    $('category').value
-  );
-}
-    const row={
-  name:$('name').value.trim(),
-  category:$('category').value,
-  audience:$('audience').value,
-  karat:$('karat').value,
-  weight:$('weight').value?Number($('weight').value):null,
-  price:$('price').value?Number($('price').value):null,
-  description:$('description').value.trim(),
-  active:$('active').checked,
-  image_urls:imageUrls
-      row.code = generatedCode;
-}
-};            
-;if(imageUrls.length)row.image_url=imageUrls[0];let result;if(id)result=await sb.from('products').update(row).eq('id',id);else result=await sb.from('products').insert(row);if(result.error)throw result.error;say('¡Joya guardada con '+imageUrls.length+' foto(s)!');resetForm();await refresh();}catch(err){say('No se pudo guardar: '+(err.message||'revisa la configuración de Supabase.'));}finally{$('saveBtn').disabled=false;}});
-window.editProduct=async id=>{const {data,error}=await sb.from('products').select('*').eq('id',id).single();if(error){say('No se pudo abrir el producto.');return;} $('productId').value=data.id;$('name').value=data.name;$('category').value=data.category;$$('audience').value=data.audience||'Unisex';('karat').value=data.karat||'18K';$('weight').value=data.weight??'';$('price').value=data.price??'';$('description').value=data.description||'';$('active').checked=!!data.active;window.editingImageUrls=Array.isArray(data.image_urls)?data.image_urls.filter(Boolean):[];if(data.image_url&&!window.editingImageUrls.includes(data.image_url))window.editingImageUrls.unshift(data.image_url);$('currentPhotos').textContent='Fotos actuales: '+window.editingImageUrls.length+' · Las nuevas se agregarán al final.';$('formTitle').textContent='Editar joya';$('saveBtn').textContent='Guardar cambios';$('cancelEdit').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});say('Edita los datos. Las fotos actuales se conservan; puedes seleccionar más fotos para agregarlas.');};
+  try {
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        throw Error('Uno de los archivos no parece ser una imagen.');
+      }
+
+      if (file.size > 8 * 1024 * 1024) {
+        throw Error('Una foto supera 8 MB.');
+      }
+
+      const ext = (file.name.split('.').pop() || 'jpg')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+
+      const path = currentUser.id + '/' +
+        crypto.randomUUID() + '.' + ext;
+
+      const { error: upErr } = await sb.storage
+        .from('joyas')
+        .upload(path, file, {
+          upsert: false,
+          contentType: file.type
+        });
+
+      if (upErr) throw upErr;
+
+      imageUrls.push(
+        sb.storage.from('joyas').getPublicUrl(path).data.publicUrl
+      );
+    }
+
+    if (!id && !imageUrls.length) {
+      throw Error('Selecciona al menos una foto para la nueva joya.');
+    }
+
+    let generatedCode;
+
+    if (id) {
+      const { data: existing, error } = await sb
+        .from('products')
+        .select('code')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      generatedCode = existing.code ||
+        await generateProductCode($('category').value);
+    } else {
+      generatedCode = await generateProductCode(
+        $('category').value
+      );
+    }
+
+    const row = {
+      name: $('name').value.trim(),
+      category: $('category').value,
+      code: generatedCode,
+      audience: $('audience').value,
+      karat: $('karat').value,
+      weight: $('weight').value
+        ? Number($('weight').value) : null,
+      price: $('price').value
+        ? Number($('price').value) : null,
+      description: $('description').value.trim(),
+      active: $('active').checked,
+      image_urls: imageUrls
+    };
+
+    if (imageUrls.length) {
+      row.image_url = imageUrls[0];
+    }
+
+    let result;
+
+    if (id) {
+      result = await sb.from('products')
+        .update(row)
+        .eq('id', id);
+    } else {
+      result = await sb.from('products').insert(row);
+    }
+
+    if (result.error) throw result.error;
+
+    say('¡Joya guardada! Código: ' + generatedCode);
+
+    resetForm();
+    await refresh();
+
+  } catch (err) {
+    console.error(err);
+    say('No se pudo guardar: ' + (err.message || 'Error desconocido.'));
+  } finally {
+    $('saveBtn').disabled = false;
+  }
+});
+
+  
+  window.editProduct=async id=>{const {data,error}=await sb.from('products').select('*').eq('id',id).single();if(error){say('No se pudo abrir el producto.');return;} $('productId').value=data.id;$('name').value=data.name;$('category').value=data.category;$('audience').value=data.audience||'Unisex';$('karat').value=data.karat||'18K';$('weight').value=data.weight??'';$('price').value=data.price??'';$('description').value=data.description||'';$('active').checked=!!data.active;window.editingImageUrls=Array.isArray(data.image_urls)?data.image_urls.filter(Boolean):[];if(data.image_url&&!window.editingImageUrls.includes(data.image_url))window.editingImageUrls.unshift(data.image_url);$('currentPhotos').textContent='Fotos actuales: '+window.editingImageUrls.length+' · Las nuevas se agregarán al final.';$('formTitle').textContent='Editar joya';$('saveBtn').textContent='Guardar cambios';$('cancelEdit').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});say('Edita los datos. Las fotos actuales se conservan; puedes seleccionar más fotos para agregarlas.');};
 function resetForm(){$('productForm').reset();$('productId').value='';window.editingImageUrls=[];$('currentPhotos').textContent='';$('active').checked=true;$('formTitle').textContent='Añadir una joya';$('saveBtn').textContent='Guardar joya';$('cancelEdit').classList.add('hidden');}
 $('cancelEdit').addEventListener('click',resetForm);
 window.toggleProduct=async(id,active)=>{const {error}=await sb.from('products').update({active}).eq('id',id);if(error)say('No se pudo cambiar la visibilidad.');else{say(active?'Joya publicada.':'Joya oculta.');await refresh();}};
