@@ -347,65 +347,100 @@ async function getProductImageUrl(path) {
 
   
 function renderProductCards(items) {
-  const container = document.getElementById('productsList');
+  window.changeJewelryStatus = async function(id, status) {
+  const validStatuses = [
+    'available',
+    'reserved',
+    'sold',
+    'out_of_stock'
+  ];
+
+  if (!validStatuses.includes(status)) return;
+
+  try {
+    const { error } = await supabase
+      .from('products')
+      .update({
+        status: status,
+        active: status === 'available'
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    alert('Disponibilidad actualizada correctamente.');
+
+    await refreshAll();
+
+  } catch (error) {
+    console.error('Error actualizando disponibilidad:', error);
+    alert('No se pudo actualizar: ' + error.message);
+  }
+};
+  const container = $('productsList');
 
   if (!container) return;
 
-  if (!items || items.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        No hay joyas registradas.
-      </div>
-    `;
+  const search = $('productSearch').value.trim().toLowerCase();
+
+  const filtered = (items || []).filter(p =>
+    [p.code, p.name, p.category]
+      .some(value => String(value || '').toLowerCase().includes(search))
+  );
+
+  const available = items.filter(p =>
+    (p.status || 'available') === 'available'
+  );
+
+  $('stockAvailable').textContent = available.length;
+  $('metricProducts').textContent = items.length;
+
+  if (!filtered.length) {
+    container.innerHTML = '<p class="note">No se encontraron joyas.</p>';
     return;
   }
 
-  container.innerHTML = items.map(p => {
-    const image = p.image_url ||
-      (Array.isArray(p.image_urls) ? p.image_urls[0] : '');
+  const states = {
+    available: 'Disponible',
+    reserved: 'Reservada',
+    sold: 'Vendida',
+    out_of_stock: 'Agotada'
+  };
 
-    const status = p.status || 'available';
+  container.innerHTML = `
+    <div class="product-grid">
+      ${filtered.map(p => {
+        const image = p.image_url ||
+          (Array.isArray(p.image_urls) ? p.image_urls[0] : '');
 
-    const statusText = {
-      available: 'Disponible',
-      sold: 'Vendida',
-      out_of_stock: 'Agotada'
-    };
+        const status = p.status || 'available';
 
-    return `
-      <article class="product-card">
-        ${image ? `
-          <img
-            src="${image}"
-            alt="${p.name || 'Joya'}"
-            class="product-image"
-          >
-        ` : ''}
+        return `
+          <article class="product-card">
+            ${image ? `<img class="product-image"
+              src="${escapeHTML(image)}" alt="Joya">` : ''}
 
-        <div class="product-info">
-          <strong>${p.name || 'Sin nombre'}</strong>
+            <div class="product-info">
+              <strong>${escapeHTML(p.name)}</strong>
+              <p>Código: ${escapeHTML(p.code)}</p>
+              <p>Categoría: ${escapeHTML(p.category)}</p>
+              <p>Estado: <strong>${states[status] || status}</strong></p>
+              <p>Visibilidad: ${p.active ? 'Visible' : 'Oculta'}</p>
 
-          <p>Código: ${p.code || 'Sin código'}</p>
-          <p>Categoría: ${p.category || 'Sin categoría'}</p>
-          <p>Quilates: ${p.karat || 'No especificado'}</p>
-          <p>Peso: ${p.weight ?? 'No especificado'} g</p>
-          <p>Precio: ${p.price != null
-            ? Number(p.price).toLocaleString('es-CO', {
-                style: 'currency',
-                currency: 'COP',
-                maximumFractionDigits: 0
-              })
-            : 'No especificado'}</p>
-
-          <p>Estado: ${statusText[status] || status}</p>
-
-          <p>Visibilidad: ${p.active ? 'Visible en catálogo' : 'Oculta del catálogo'}</p>
-        </div>
-      </article>
-    `;
-  }).join('');
+              <label>Disponibilidad</label>
+              <select onchange="window.changeJewelryStatus('${p.id}', this.value)">
+                <option value="available" ${status === 'available' ? 'selected' : ''}>Disponible</option>
+                <option value="reserved" ${status === 'reserved' ? 'selected' : ''}>Reservada</option>
+                <option value="sold" ${status === 'sold' ? 'selected' : ''}>Vendida</option>
+                <option value="out_of_stock" ${status === 'out_of_stock' ? 'selected' : ''}>Agotada</option>
+              </select>
+            </div>
+          </article>
+        `;
+      }).join('')}
+    </div>
+  `;
 }
-
 $('productSearch').addEventListener('input', () => {
   renderProductCards(cachedProducts);
 });
