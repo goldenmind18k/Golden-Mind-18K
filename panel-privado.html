@@ -289,39 +289,65 @@ async function getProductImageUrl(path) {
   }
 
   
-async function renderProductCards(items) {
-  const query = ($('productSearch')?.value || '').trim().toLowerCase();
+function renderProductCards(items) {
+  const container = document.getElementById('productsList');
 
-  const filtered = items.filter(p =>
-    [p.code, p.name, p.category, p.gold_type]
-      .some(value => String(value || '').toLowerCase().includes(query))
-  );
+  if (!container) return;
 
-  if (!filtered.length) {
-    $('productsList').innerHTML =
-      '<h3>Joyas registradas</h3><p class="note">No se encontraron joyas.</p>';
+  if (!items || items.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        No hay joyas registradas.
+      </div>
+    `;
     return;
-  } 
-  
-  const cards = [];
-
-  for (const p of filtered) {
-    const imageUrl = await getProductImageUrl(p.image_url);
-
-    cards.push(`
-      <article class="record" style="margin-bottom:14px;padding:14px;">
-        ${imageUrl
-          ? `<img src="${escapeHTML(imageUrl)}" alt="Fotografía de ${escapeHTML(p.name)}"
-              style="width:100%;height:200px;object-fit:contain;border-radius:10px;background:#111;margin-bottom:10px;">`
-          : '<div style="height:100px;display:grid;place-items:center;color:#aaa;">Sin fotografía</div>'}
-        <strong>${escapeHTML(p.code || 'SIN CÓDIGO')} · ${escapeHTML(p.name)}</strong>
-        <p>${escapeHTML(p.category || '')} · ${escapeHTML(p.gold_type || 'Tipo no indicado')}</p>
-        <p>Peso: ${escapeHTML(p.weight_g ?? '—')} g · ${escapeHTML(p.karat ?? 18)}K</p>
-        <p class="note">Costo: ${money(p.supplier_cost)} · Venta: ${money(p.sale_price)}</p>
-        <p>Estado: ${escapeHTML(p.status || '—')}</p>
-      </article>
-    `);
   }
+
+  container.innerHTML = items.map(p => {
+    const image = p.image_url ||
+      (Array.isArray(p.image_urls) ? p.image_urls[0] : '');
+
+    const status = p.status || 'available';
+
+    const statusText = {
+      available: 'Disponible',
+      sold: 'Vendida',
+      out_of_stock: 'Agotada'
+    };
+
+    return `
+      <article class="product-card">
+        ${image ? `
+          <img
+            src="${image}"
+            alt="${p.name || 'Joya'}"
+            class="product-image"
+          >
+        ` : ''}
+
+        <div class="product-info">
+          <strong>${p.name || 'Sin nombre'}</strong>
+
+          <p>Código: ${p.code || 'Sin código'}</p>
+          <p>Categoría: ${p.category || 'Sin categoría'}</p>
+          <p>Quilates: ${p.karat || 'No especificado'}</p>
+          <p>Peso: ${p.weight ?? 'No especificado'} g</p>
+          <p>Precio: ${p.price != null
+            ? Number(p.price).toLocaleString('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                maximumFractionDigits: 0
+              })
+            : 'No especificado'}</p>
+
+          <p>Estado: ${statusText[status] || status}</p>
+
+          <p>Visibilidad: ${p.active ? 'Visible en catálogo' : 'Oculta del catálogo'}</p>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
 
   $('productsList').innerHTML =
     '<h3>Joyas registradas</h3>' + cards.join('');
@@ -332,39 +358,39 @@ $('productSearch').addEventListener('input', () => {
 });
   
   async function refreshAll() {
-    try {
-       
-const [products, suppliers, orders, movements] = await Promise.all([
-  loadRows('products'),
-  loadRows('suppliers'),
-  loadRows('orders'),
-  loadRows('cash_movements')
-]);
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-cachedProducts = products;
- await renderProductCards(products);     
-     $('metricProducts').textContent = products.length;
-      $('metricOrders').textContent = orders.length;
-      $('metricIncome').textContent = money(movements.filter(x => x.movement_type === 'income' || x.movement_type === 'capital_in').reduce((s, x) => s + Number(x.amount), 0));
-      $('metricExpenses').textContent = money(movements.filter(x => x.movement_type === 'expense' || x.movement_type === 'capital_out').reduce((s, x) => s + Number(x.amount), 0));
+    if (error) throw error;
 
-      
+    cachedProducts = data || [];
 
-      $('suppliersList').innerHTML = '<h3>Proveedores registrados</h3>' + (suppliers.map(s =>
-        `<div class="record"><strong>${escapeHTML(s.name)}</strong><br>${escapeHTML(s.phone || '')}<br><span class="note">${escapeHTML(s.notes || '')}</span></div>`
-      ).join('') || '<p class="note">Todavía no hay proveedores.</p>');
+    renderProductCards(cachedProducts);
 
-      $('ordersList').innerHTML = '<h3>Pedidos registrados</h3>' + (orders.map(o =>
-        `<div class="record"><strong>${escapeHTML(o.customer_name)}</strong><br>${escapeHTML(o.description || '')}<br><span class="note">Venta: ${money(o.sale_price)} · Anticipo inicial: ${money(o.deposit)} · Saldo estimado: ${money(Number(o.sale_price)-Number(o.deposit))}</span></div>`
-      ).join('') || '<p class="note">Todavía no hay pedidos.</p>');
+    const metricProducts = document.getElementById('metricProducts');
 
-      $('financeList').innerHTML = '<h3>Movimientos registrados</h3>' + (movements.map(m =>
-        `<div class="record"><strong>${escapeHTML(m.category)}</strong><br>${escapeHTML(m.movement_type)} · ${money(m.amount)}<br><span class="note">${escapeHTML(m.description || '')}</span></div>`
-      ).join('') || '<p class="note">Todavía no hay movimientos.</p>');
-    } catch (error) {
-      showMessage('No se pudieron cargar los datos: ' + (error.message || 'Error desconocido'), true);
+    if (metricProducts) {
+      metricProducts.textContent = cachedProducts.length;
+    }
+
+  } catch (error) {
+    console.error('Error cargando inventario:', error);
+
+    const container = document.getElementById('productsList');
+
+    if (container) {
+      container.innerHTML = `
+        <div class="empty-state">
+          No se pudo cargar el inventario.
+          ${error.message}
+        </div>
+      `;
     }
   }
+}
 
   $('loginBtn').addEventListener('click', async () => {
     showMessage('Verificando acceso...');
